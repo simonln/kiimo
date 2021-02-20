@@ -50,7 +50,7 @@ if (${CMAKE_GENERATOR} MATCHES "MinGW")
 	link_directories(${SQLITES_PATH}/lib)
 	#set windows SDK version for poll function
 	add_definitions(-D_WIN32_WINNT=0x0600)
-	target_link_libraries(kiimo "pthread" "sqlite3")
+	#target_link_libraries(kiimo "pthread" "sqlite3")
 elseif(${CMAKE_GENERATOR} MATCHES "MSVC")
 	add_definitions(/std:c++11 /D "_DEBUG")
 endif()
@@ -79,7 +79,7 @@ file(GLOB_RECURSE ALL_SRCS LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURC
 
 add_executable(kiimo ${ALL_SRCS})
 
-# only for linux
+# only for gcc
 target_link_libraries(kiimo "pthread" "sqlite3")
 
 

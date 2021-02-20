@@ -8,7 +8,9 @@
 
 #include "poller.h"
 #include <cstring>
+#ifdef linux
 #include <unistd.h>
+#endif
 
 #ifdef _DEBUG
 #include "logger.h"
@@ -31,6 +33,25 @@ auto Poller::HasEvent(Socket::Id id) -> decltype(events_.begin())
   return events_.end();
 
 }
+void Poller::Add(Socket::Id id, EventType type)
+{
+  auto it = HasEvent(id);
+  if (it != events_.end())
+  {
+    return;
+  }
+  struct pollfd new_event {id, 0, 0};
+  if(type & EventType::kReadEvent)
+  {
+    new_event.events |= POLLRDNORM;
+  }
+  if(type & EventType::kWriteEvent)
+  {
+    new_event.events |= POLLWRNORM;
+  }
+  events_.emplace_back(new_event);
+
+}
 
 void Poller::Update(Socket::Id id,EventType type)
 {
@@ -45,20 +66,6 @@ void Poller::Update(Socket::Id id,EventType type)
     {
       it->events |= POLLWRNORM;
     }
-  }
-  else
-  {
-    //WSAPOLLFD new_event {id,0,0};
-    struct pollfd new_event {id, 0, 0};
-    if(type & EventType::kReadEvent)
-    {
-      new_event.events |= POLLRDNORM;
-    }
-    if(type & EventType::kWriteEvent)
-    {
-      new_event.events |= POLLWRNORM;
-    }
-    events_.emplace_back(new_event);
   }
 }
 
@@ -131,6 +138,7 @@ std::map<Socket::Id,int> Poller::Wait(int timeout)
 }
 #endif
 
+#if linux
 Epoller::Epoller()
   :epoll_fd_(-1), epoll_working_(false)
 {
@@ -248,7 +256,7 @@ std::map<Socket::Id, int> Epoller::Wait(int timeout)
   return actives;
 
 }
-
+#endif
 
 void Select::Update(Socket::Id sock,EventType event)
 {
@@ -463,7 +471,7 @@ int SingleSelect::Wait()
   return res;
 }
 
-#ifdef _WIN32
+#if ( _WIN32 && USE_IOCP)
 bool Iocp::Init(Socket::Id listen_sock)
 {
   int res = true;

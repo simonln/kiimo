@@ -82,6 +82,8 @@ namespace net{
       std::vector<struct pollfd> events_;
     };
 #endif
+
+#ifdef linux
     /// epoll implement
     class Epoller:IPoller
     {
@@ -105,6 +107,7 @@ namespace net{
         int epoll_fd_;
         bool epoll_working_;    // epoll fd is vaild
     };
+  #endif
 
 
     /**

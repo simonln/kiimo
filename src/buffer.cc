@@ -12,18 +12,21 @@
 
 #include "buffer.h"
 
-#include <sys/uio.h>
+
 #include <errno.h>
 
 #ifdef _DEBUG
 #include "logger.h"
 #include "utils.h"
+using namespace kiimo::base;
 #endif
 
 #ifdef _WIN32
 #define iovec _WSABUF
 #define iov_base buf
 #define iov_len len
+#else
+#include <sys/uio.h>
 #endif
 
 namespace kiimo
@@ -69,7 +72,9 @@ namespace net
       if (ret != 0 || n < 0)
       {
           *err = GetLastError();
+#ifdef _DEBUG
           DebugL << "WSARecv error : " << *err;
+#endif
       }
 #else
       const int iovcnt = (writable < sizeof extrabuf) ? 2 : 1;
