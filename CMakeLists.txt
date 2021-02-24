@@ -24,8 +24,7 @@ if (${CMAKE_BUILD_TYPE} STREQUAL Debug)
 endif()
 
 if (${CMAKE_BUILD_TYPE} STREQUAL UnitTest)
-	# windows
-	# set(GTEST_PATH "D:\\work\\src\\googletest")
+	# googletest 库置于与当前项目统计目录下
 	set(GTEST_PATH "${CMAKE_CURRENT_SOURCE_DIR}/../googletest")
 	# message(${GTEST_PATH})
 	include_directories(${GTEST_PATH}/googletest/include)
@@ -39,8 +38,10 @@ endif()
 #set (CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -g -O0 -Wall")
 #set (CMAKE_EXE_LINKER_FLAGS_RELEASE  "-std=c++11 -static -g0 -O2")
 
+if (${CMAKE_GENERATOR} MATCHES "gcc")
 # 禁止多字节编译警告
 add_definitions(-Wno-multichar)
+endif()
 
 #环境
 if (${CMAKE_GENERATOR} MATCHES "MinGW")
@@ -58,7 +59,8 @@ endif()
 #项目名称
 project(kiimo)
 
-if (WIN32)
+if (WIN32) 
+	include_directories(src/wepoll)
 	link_libraries("Ws2_32")
 endif()
 
@@ -71,11 +73,17 @@ include_directories(src/databases  src/http)
 #add_executable(kiimo ${DIR_SRCS})
 
 #列出当前项目下所有的.cc文件
-file(GLOB_RECURSE ALL_SRCS LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cc)
+file(GLOB_RECURSE ALL_CXX_SRCS LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} *.cc)
 
 #库文件搜索目录
 #link_directories(${SQLITES_PATH}/lib ${FMT_PATH})
 
+if (WIN32)
+	# 加上wepoll.c文件
+	set(ALL_SRCS ${ALL_CXX_SRCS} "src/wepoll/wepoll.c")
+else()
+	set(ALL_SRCS ${ALL_CXX_SRCS})
+endif()
 
 add_executable(kiimo ${ALL_SRCS})
 

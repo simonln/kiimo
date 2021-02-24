@@ -1,4 +1,6 @@
 # 说明
-一个类似于mudoo的跨平台网络框架
+一个类似于mudoo的跨平台网络框架。
+linux平台上使用epoll多路复用接口，windows上使用IOCP端口（wepoll库）
 
 # TODO
+1. 支持短连接

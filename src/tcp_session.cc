@@ -98,25 +98,6 @@ Socket::Ptr TcpSession::GetSocket()
 
 void TcpSession::HandleRead()
 {
-#ifdef USE_IOCP
-  int size = loop_->SpecialRecv(socket_->GetId(), recv_buff_);
-  if(size <= 0 )
-  {
-    if(on_disconnect_)
-    {
-      on_disconnect_(shared_from_this());
-    }
-    socket_->Close();
-  }
-  else
-  {
-    if(on_message_)
-    {
-      on_message_(shared_from_this(),recv_buff_);
-    }
-  }
-#else
-
   //int size = socket_->Avaliable();
     int err = 0;
     size_t size = recv_buff_.ReadFromFD(socket_->GetId(), &err);
@@ -137,19 +118,13 @@ void TcpSession::HandleRead()
       on_message_(shared_from_this(),recv_buff_);
     }
   }
-#endif
 }
 void TcpSession::HandleWrite()
 {
   if(send_buff_.size() > 0)
   {
-#ifdef USE_IOCP
-    loop_->SpecialSend(socket_->GetId(), send_buff_);
-#else
     int n = socket_->Send(send_buff_.data(),send_buff_.size());
-#endif
     send_buff_.Skip(n);
-
   }
   else
   {

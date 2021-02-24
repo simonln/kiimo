@@ -292,19 +292,7 @@ namespace net {
 
    private:
     bool quit_;                           // thread loop quit flag
-#ifdef USE_IOCP
-    Iocp select_;
-#else
-  #ifdef linux
-      Epoller select_;
-  #else
-    #if ( _WIN32_WINNT >= 0x0600 )
-      Poller select_;
-    #else
-      Select select_;
-    #endif
-  #endif
-#endif
+    Epoller select_;
     base::TimeQueue timer_;                // timer run in event loop
     std::map<Socket::Id,Event*> events_;    //focus event list
     std::list<Function> pending_work_;

@@ -108,29 +108,6 @@ EventLoop::EventLoop()
 {
 }
 
-#ifdef USE_IOCP
-void EventLoop::InitIocp(const Socket::Id id)
-{
-  select_.Init(id);
-}
-void EventLoop::ReleaseIocp()
-{
-  select_.Release();
-}
-Socket::Ptr EventLoop::SpecialAccept()
-{
-  return select_.SpecialAccept();
-}
-int EventLoop::SpecialSend(const Socket::Id id,const std::vector<char> &buff)
-{
-  return select_.SpecialSend(id,buff);
-}
-int EventLoop::SpecialRecv(const Socket::Id id,std::vector<char> &buff)
-{
-  return select_.SpecialRecv(id,buff);
-}
-#endif
-
 #if 0
 bool EventLoop::HasEvent(Event *event)
 {
@@ -254,38 +231,13 @@ void EventLoop::Cancle(TimerId id)
 void EventLoop::Loop()
 {
   quit_ = false;
-//  if(events_.size() <= 0)
-//  {
-//    return;
-//  }
-#ifdef USE_IOCP
-  std::pair<Socket::Id,int> actives;
-#else
+
   std::map<Socket::Id,int> actives;
-#endif
   while(!quit_)
   {
     actives = select_.Wait();
     //if(actives.size() > 0)
     {
-#ifdef USE_IOCP
-      auto it = events_.find(actives.first);
-      if(it != events_.end())
-      {
-        if(actives.second & EventType::kReadEvent)
-        {
-          it->second->ReadHandler();
-        }
-        if(actives.second & EventType::kWriteEvent)
-        {
-            it->second->WriteHandler();
-        }
-        if(actives.second & EventType::kExceptEvent)
-        {
-            it->second->ExceptHandler();
-        }
-      }
-#else
       for(auto it = actives.begin() ; it != actives.end() ; ++it)
       {
 
@@ -307,7 +259,6 @@ void EventLoop::Loop()
 
 
       }
-#endif
     }
 
     timer_.DoFunction();  //500ms

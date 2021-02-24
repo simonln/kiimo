@@ -59,9 +59,6 @@ void TcpServer::Start(int max_thread)
       InfoL << "listen port: "  << socket_.GetLocalHost().GetPortString() << endl;
     }
     //add to event loop
-#ifdef USE_IOCP
-    base_loop_->InitIocp(socket_.GetId());
-#endif
     event_ = new Event(socket_.GetId(),(EventType)(EventType::kReadEvent | EventType::kExceptEvent));
     event_->SetReadHandler(std::bind(&TcpServer::Accepter,this)); // @suppress("Invalid arguments")
     event_->setExceptHandler(std::bind(&TcpServer::ExceptHappened,this)); // @suppress("Invalid arguments")
@@ -79,11 +76,9 @@ void TcpServer::Start(int max_thread)
 void TcpServer::Accepter()
 {
   //accpt new connection
-#ifdef USE_IOCP
-  Socket::Ptr con = base_loop_->SpecialAccept();
-#else
+
   Socket::Ptr con = socket_.Accept();
-#endif
+  
   if(con->GetId() >= 0)
   {
     //TcpClient::Ptr client = make_shared<TcpClient>(con);

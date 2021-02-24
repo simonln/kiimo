@@ -18,6 +18,7 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <mswsock.h>
+#include "wepoll/wepoll.h"
 #else
 #include <poll.h>
 #include <sys/epoll.h>
@@ -83,7 +84,7 @@ namespace net{
     };
 #endif
 
-#ifdef linux
+
     /// epoll implement
     class Epoller:IPoller
     {
@@ -104,10 +105,14 @@ namespace net{
       private:
         void UpdateCtrl(Socket::Id, EventType type, Opr op);
       private:
+#if _WIN32
+        HANDLE epoll_fd_;
+#else
         int epoll_fd_;
+#endif
         bool epoll_working_;    // epoll fd is vaild
     };
-  #endif
+
 
 
     /**
