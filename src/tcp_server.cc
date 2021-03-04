@@ -94,25 +94,6 @@ void TcpServer::Accepter()
         loop->UpdateEvent(event);
         
     });
-
-    //TcpSession::Ptr session = make_shared<TcpSession>(socket_.GetLocalHost(),loop,con);
-    //session->SetOnConnect(on_connecting_);
-    //session->SetOnMessage(on_message_);
-    //session->SetOnClose(on_disconnect_);
-    //session->SetOnMessage(std::bind(&TcpServer::ClientMsgCome, this,_1,_2));
-    //session->SetOnMessage([&](const TcpSession::Ptr &con,Message &msg){RunInThreadPool([&]{ on_message_(con,msg);});});
-    //session->SetOnClose(std::bind(&TcpServer::StopConnect,this,session));
-    //TcpEvent *event = new TcpEvent(session,EventType::kReadEvent);  // subscribe to all event default
-    //event->SetOnConnect(on_connecting_);    //on_connecting run in EstablishConnect
-    //event->SetOnMessage(on_message_);
-    //event->SetOnDisconnect(std::bind(&TcpServer::StopConnect,this,session));
-    //loop->UpdateEvent(event);
-
-    //if(links_.find(session) == links_.end())
-//    {
-//      links_.emplace(session,event);
-//      EstablishConnect(session);
-//    }
   }
   else
   {
@@ -130,18 +111,7 @@ void TcpServer::ExceptHappened()
 
 void TcpServer::RunInThreadPool(const Function &func)
 {
-//  if(func != nullptr)
-//  {
-//    if(thread_pool_)
-//    {
-//      thread_pool_->AddTask([&]{func();});
-//    }
-//    else
-//    {
-      //single thread
-      func();
-//    }
-//  }
+    func();
 }
 
 

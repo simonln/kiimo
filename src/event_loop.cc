@@ -194,7 +194,8 @@ void EventLoop::RemoveEvent(Event *event)
         select_.Update(it->first, EventType(it->second->wait_event));
       }
       else
-      {  
+      {
+        select_.Remove(it->first, EventType::kAllEvent);  
         //no wait event ,delete this event from list
         delete (it->second);
         events_.erase(it);
@@ -240,8 +241,6 @@ void EventLoop::Loop()
     {
       for(auto it = actives.begin() ; it != actives.end() ; ++it)
       {
-
-
         if(it->second & EventType::kReadEvent)
         {
             events_[it->first]->ReadHandler();

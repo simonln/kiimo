@@ -98,8 +98,11 @@ namespace net{
       public:
        Epoller();
        ~Epoller();
+       /// add a socket with event to listen queue
        void Add(Socket::Id id, EventType type) override;
+       /// update the event in listen socket queue 
        void Update(Socket::Id id, EventType type) override;
+       /// remove the socket from listen queue
        void Remove(Socket::Id id, EventType type) override;
        std::map<Socket::Id,int> Wait(int millsecond = kTimeout);
       private:
@@ -171,75 +174,6 @@ namespace net{
       int wait_events_;
       fd_set fds_[3];
     };
-#ifdef _WIN32
-    enum class CompletionOp
-    {
-      kNone,
-      kAccepting,
-      kAccepted,
-      kReading,
-      kRead,
-      kWriting,
-      kWrited,
-    };
-    struct CompletionState
-    {
-      Socket::Id id;
-      CompletionOp op;
-      int length;
-      char *buffer;
-      int focus;
-      int recv_len;
-      int async_recv_start;
-      int send_len;
-      int async_send_end;
-
-      /// default constructor
-      CompletionState(Socket::Id sock,CompletionOp operation,
-                      int len = 0,char *buff=nullptr,int foc = EventType::kNoneEvent)
-        :id(sock),op(operation),length(len),buffer(buff),focus(foc),
-         recv_len(0),async_recv_start(0),send_len(0),async_send_end(0)
-      {
-      }
-    };
-    /**
-     *  IO completion port in Windows
-     */
-    class Iocp
-    {
-     public:
-      bool Init(Socket::Id listen_sock);
-      void Release();
-      void Update(Socket::Id id,EventType event);
-      void Remove(Socket::Id id,EventType event);
-      //int Wait(CompletionState *state);
-      std::pair<Socket::Id,int> Wait(int millsecond = kTimeout);
-
-      Socket::Ptr SpecialAccept();
-      int SpecialSend(const Socket::Id id,const std::vector<char> &buff);
-      int SpecialRecv(const Socket::Id id,std::vector<char> &buff);
-     private:
-      bool StartAccept();
-      std::list<CompletionState*>::iterator HasLink(Socket::Id id);
-      bool StartReading(CompletionState *state);
-      void FixReceiveBuffer(CompletionState *state);
-      void FixSendBuffer(CompletionState *state);
-     public:
-       static const int kBufferSize = 2048;
-     private:
-      Socket::Id listen_sock_;
-      //Socket::Id accept_sock_;
-      CompletionState *listen_state_;
-      //std::map<Socket::Id,int> event_;
-      HANDLE port_;
-      LPFN_ACCEPTEX acceptex_;
-      LPFN_GETACCEPTEXSOCKADDRS getaddrex_;
-      WSAOVERLAPPED listen_ovl_;
-      WSAOVERLAPPED res_ovl_;
-      //char addr_buff_[128];   //save remote address info and local address info only
-      std::list<CompletionState*> links_;
-    };
-#endif
 
   } //namespace net
 } //namespace kiimo

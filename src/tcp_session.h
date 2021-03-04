@@ -32,16 +32,11 @@ namespace kiimo {
       int Send(const char *buffer,int size);
       int Send(std::vector<char> &buffer);
 
-      int Getdata(char *buffer,size_t max_size);
-      int GetData(std::vector<char> &buffer);
-
+      /// close the link  right now
+      void Termination();
+      /// close the link after all data is send over
       void Shutdown();
 
-      //void SendTo(const char *buffer,int size);
-      void AppendToBuffer(const char *buffer,int size);
-
-
-      //TcpClient::Ptr GetTcpClientPtr();
       Socket::Id GetSocketId() const;
       Socket::Ptr GetSocket();
 
@@ -55,6 +50,8 @@ namespace kiimo {
       void HandleWrite();
       void HandleExcept();
       /// @}
+    private:
+      void DisableWriting();
 
      private:
       enum class Status{kConnected,kReceive,kSend,kDisconnect,};
@@ -62,9 +59,7 @@ namespace kiimo {
       EventLoop *loop_;
       Socket::Ptr socket_;
       Status status_;
-      //std::vector<char> recv_buff_;
       Buffer recv_buff_;
-      //std::vector<char> send_buff_;
       Buffer send_buff_;
 
       ConnectCallback on_connect_;

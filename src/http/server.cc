@@ -75,7 +75,6 @@ void HttpServer::OnMessage(const TcpSession::Ptr &con,Message& msg )
 
   auto it = routers_.find(request.path);
   if(it != routers_.end())
-//  if(routers_.count(request.path) == 1)
   {
     response = it->second(request);
   }
@@ -88,9 +87,9 @@ void HttpServer::OnMessage(const TcpSession::Ptr &con,Message& msg )
   std::vector<char> rsp;
   HttpParser::Deparse(response,rsp);
   con->Send(rsp);
-//  if(!request.connection)
+//  if(request.GetHeaderValue("Connection") == "")
 //  {
-//    con->ShutDown();
+//    con->Shutdown();
 //  }
 }
 void HttpServer::OnDisconect(const TcpSession::Ptr &con)

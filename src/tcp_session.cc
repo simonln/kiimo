@@ -12,23 +12,19 @@
 
 #include "event_loop.h"
 
+#include "logger.h" // for log
+using namespace kiimo::base;
+
 using namespace kiimo::net;
 
 TcpSession::TcpSession(IpEndPoint server,EventLoop *loop,Socket::Ptr con)
   :server_(server),loop_(loop),socket_(con),status_(Status::kConnected)
-   //on_connect_(nullptr),on_disconnect_(nullptr),on_message_(nullptr)
 {
-  //recv_buff_.reserve(2048);  //value near by MTU(1500)
-  //send_buff_.reserve(2048);
+  // set default value for callback function
   on_connect_ = [](const TcpSession::Ptr&){};
   on_message_ = [](const TcpSession::Ptr&,const Message&){};
   on_disconnect_ = [](const TcpSession::Ptr&){};
 }
-
-//TcpClient::Ptr Connection::GetTcpClientPtr()
-//{
-// return client_;
-//}
 
 int TcpSession::Send(const char *buffer , int size)
 {
@@ -53,38 +49,23 @@ int TcpSession::Send(std::vector<char> &buffer)
   return Send(buffer.data(),buffer.size());
 }
 
-int TcpSession::Getdata(char *buffer,size_t max_size)
-{
-  int read_size = 0;
-//  if(max_size > recv_buff_.size())
-//  {
-//    read_size = recv_buff_.size();
-//  }
-//  memcpy(buffer,recv_buff_.data(),read_size * sizeof(char));
-//  recv_buff_.erase(recv_buff_.begin(),recv_buff_.begin() + read_size);
-  return read_size;
-}
-
-int TcpSession::GetData(std::vector<char> &buffer)
-{
-//  buffer.assign(recv_buff_.begin(), recv_buff_.end());
-//  recv_buff_.clear();
-  return buffer.size();
-}
-
-
 void TcpSession::Shutdown()
 {
+  if (recv_buff_.size() > 0)
+  {
+    status_ = Status::kDisconnect;
+  }
+}
+
+void TcpSession::Termination()
+{
   on_disconnect_(shared_from_this());
-  socket_->Close();
+  
   auto* event = new Event(socket_->GetId(), EventType::kAllEvent);
   loop_->RemoveEvent(event);
   delete event;
-  
-}
-void TcpSession::AppendToBuffer(const char *buffer,int size)
-{
-//  recv_buff_.insert(recv_buff_.end(),buffer,buffer + size);
+  socket_->Close();
+
 }
 
 Socket::Id TcpSession::GetSocketId() const
@@ -98,49 +79,42 @@ Socket::Ptr TcpSession::GetSocket()
 
 void TcpSession::HandleRead()
 {
-  //int size = socket_->Avaliable();
-    int err = 0;
-    size_t size = recv_buff_.ReadFromFD(socket_->GetId(), &err);
-  if(size <= 0)
+  int err = 0;
+  size_t size = recv_buff_.ReadFromFD(socket_->GetId(), &err);
+  if(size > 0)
   {
-      //if(on_disconnect_)
-      //{
-      //  on_disconnect_(shared_from_this());
-      //}
-      //socket_->Close();
-      Shutdown();
+    on_message_(shared_from_this(),recv_buff_);
+      
+  }
+  else if (size == 0)
+  {
+      Termination();
   }
   else
   {
-
-    //if(on_message_)
-    {
-      on_message_(shared_from_this(),recv_buff_);
-    }
+    ErrorL << "read socket error: " << errno;
   }
 }
 void TcpSession::HandleWrite()
 {
-  if(send_buff_.size() > 0)
+  int n = socket_->Send(send_buff_.data(),send_buff_.size());
+  if(n > 0)
   {
-    int n = socket_->Send(send_buff_.data(),send_buff_.size());
-    send_buff_.Skip(n);
-  }
-  else
-  {
-    Event *event = new Event(socket_->GetId(),EventType::kWriteEvent);
-    loop_->RemoveEvent(event);
-    delete event;
+    send_buff_.Retrieve(n);
+    if(send_buff_.size() == 0)
+    {
+      DisableWriting();
+      if (status_ == Status::kDisconnect)
+      {
+        on_disconnect_(shared_from_this());
+        socket_->Close();
+      }
+    }
   }
 }
 void TcpSession::HandleExcept()
 {
-  //if(on_disconnect_ != nullptr)
-  //{
-  //  on_disconnect_(shared_from_this());
-  //}
-  //socket_->Close();
-    Shutdown();
+    Termination();
 }
 
 void TcpSession::SetOnConnect(const ConnectCallback &cb)
@@ -165,6 +139,11 @@ void TcpSession::SetOnMessage(const MessageCallback &cb)
   }
 }
 
-
+void TcpSession::DisableWriting()
+{
+    Event *event = new Event(socket_->GetId(),EventType::kWriteEvent);
+    loop_->RemoveEvent(event);
+    delete event;
+}
 
 

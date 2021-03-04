@@ -140,7 +140,7 @@ std::map<Socket::Id,int> Poller::Wait(int timeout)
 
 
 Epoller::Epoller()
-  :epoll_fd_(nullptr), epoll_working_(false)
+  : epoll_working_(false)
 {
   epoll_fd_ = epoll_create(1); // 1 is meanless
   if (epoll_fd_ > 0)
@@ -255,7 +255,9 @@ std::map<Socket::Id, int> Epoller::Wait(int timeout)
     }
     Socket::Id sock = events[i].data.fd;
     actives.emplace(sock, event);
+#ifdef _DEBUG
     //DebugL << Fmt::Format("socket id: {0} event: {1}", events[i].data.fd, events[i].events);
+#endif
   }
   return actives;
 
